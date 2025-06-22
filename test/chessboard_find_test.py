@@ -1,4 +1,4 @@
-from src.cv.chessboard_find import find_chessboard
+from src.cv.contours.chessboard_find import find_chessboard
 from src.cv.utils import show_image
 import cv2
 from pathlib import Path
