@@ -3,7 +3,7 @@ from src.cv.utils import show_image
 import cv2
 from pathlib import Path
 
-names = ["0.jpg"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
+names = ["chess_0.jpg"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
 
 for name in names:
   print(f"Handling {name}")
