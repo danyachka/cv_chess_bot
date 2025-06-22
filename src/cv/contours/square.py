@@ -2,11 +2,13 @@ import cv2
 import numpy as np
 from cv2.typing import MatLike
 from dataclasses import dataclass
+from typing import Final
 
+from src.cv.utils import calc_points_dist, calc_angle
 
-square_area_percentage_threshold = 1.1 / 0.9
-square_area_percentage_threshold_group = 1.1
-angle_threshold = np.pi/18
+rate: Final[float] = 0.15
+square_area_percentage_threshold = (1 + rate) / (1 - rate)
+square_area_percentage_threshold_group = (1 + rate) / (1 - rate)
 
 
 @dataclass
@@ -19,10 +21,11 @@ class Square:
     area: float
     approx: MatLike # always 4 points only
 
-    def calc_diag_angle(self) -> float:
-        x1, y1 = self.approx[0, 0]
-        x2, y2 = self.approx[2, 0]
-        return (y2 - y1) / (x2 - x1) 
+    col_pos: int = None
+    row_pos: int = None
+
+    def calc_h_angle(self) -> float:
+        return (calc_angle(self.approx[0], self.approx[3]) + calc_angle(self.approx[1], self.approx[2])) / 2
 
     def calc_side(self) -> float:
         return (self.w + self.h) / 2
@@ -44,13 +47,16 @@ def filter_squares(contours: MatLike) -> list[Square]:
         if area < 300:
             continue
 
-        (x, y, w, h) = cv2.boundingRect(approx)
+        approx = approx.reshape(4, 2)
+        points, w, h = __recompose_square_points(approx)
 
         aspect_ratio = float(w) / h
         if aspect_ratio < 0.85 or 1.15 < aspect_ratio:
             continue
 
-        squares.append(Square(x, y, w, h, area, approx))
+        x, y = points[0]
+
+        squares.append(Square(x, y, w, h, area, points))
     return squares
 
 
@@ -92,17 +98,17 @@ def __cluster_group(squares: list[Square]) -> list[list[Square]]:
     if not ret:
         print("Not successful squares kmeans search")
         return [squares]
-    print(labels.ravel())
 
-    result = [[], [], []]
+    result = [(average_vals[i], []) for i in range(len(average_vals))]
     for i, val in enumerate(labels.ravel()):
-        result[val].append(squares[i])
+        result[val][1].append(squares[i])
+    result = sorted(result, key=lambda x: len(x[1]), reverse=True)
     print(
         ', '.join([str(i + 1) + ': ' + str(len(result[i])) for i in range(len(result))]),
         f", center = {average_vals}"
     )
 
-    return __merge_similar_groups(result, average_vals)
+    return __merge_similar_groups([item[1] for item in result], [item[0] for item in result])
 
 
 def __merge_similar_groups(groups: list[list[Square]], average_vals) -> list[list[Square]]:
@@ -116,3 +122,26 @@ def __merge_similar_groups(groups: list[list[Square]], average_vals) -> list[lis
         else:
             result.append(groups[i])
     return result
+
+
+# points, w, h
+def __recompose_square_points(points):
+    r = np.zeros_like(points)
+
+    x_c = np.mean(points[:, 0])
+    y_c = np.mean(points[:, 1])
+
+    for point in points:
+        x, y = point
+        if x < x_c and y < y_c:
+            r[0] = point
+        elif x < x_c and y >= y_c:
+            r[1] = point
+        elif x >= x_c and y >= y_c:
+            r[2] = point
+        else:
+            r[3] = point
+
+    w = (calc_points_dist(r[3], r[0]) + calc_points_dist(r[2], r[1])) / 2
+    h = (calc_points_dist(r[1], r[0]) + calc_points_dist(r[3], r[2])) / 2
+    return r, w, h
