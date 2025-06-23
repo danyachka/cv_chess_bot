@@ -56,17 +56,18 @@ def increase_lines_thickness(edges: MatLike, iterations: int):
 def calc_points_dist(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-
     return np.sqrt((y2 - y1) ** 2 + (x2 - x1) ** 2)
 
 
 def calc_angle(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    return np.atan((y2 - y1) / (x2 - x1))
+    return np.arctan((y2 - y1) / (x2 - x1))
 
 
 def show_image(image, tag="Image"):
+    cv2.namedWindow(tag, cv2.WINDOW_KEEPRATIO)
     cv2.imshow(tag, image)
+    cv2.resizeWindow('custom window', 1000, 1000)
     cv2.waitKey(delay=0)
     cv2.destroyAllWindows()

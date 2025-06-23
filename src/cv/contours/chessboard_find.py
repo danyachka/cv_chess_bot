@@ -1,14 +1,17 @@
+import time
 import cv2
 from cv2.typing import MatLike
 import numpy as np
+from colorama import Fore
 
 from src.cv import utils
 from src.cv.contours.rotation import process_rotation
 from src.cv.contours.square import filter_squares, cluster_squares, Square
-from src.cv.contours.chessboard_builder import create_grid
+from src.cv.contours.chessboard_builder import build_chess_board, Chessboard
 
 
 def find_chessboard(image: MatLike, is_test=False) -> MatLike:
+    start = time.time()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     sobel = utils.process_sobel(gray)
     edges = utils.get_edges(gray=sobel, iterations=1)
@@ -25,11 +28,13 @@ def find_chessboard(image: MatLike, is_test=False) -> MatLike:
     rotated_image, rotated_squares = process_rotation(image, clustered[0])
 
     print("squares:", len(rotated_squares))
-    grid = create_grid(rotated_squares)
-    grid.print()
-
+    chessboard = build_chess_board(rotated_image, rotated_squares, is_test=is_test)
     if is_test:
-        __show_test_images(image, edges, clustered, rotated_image, rotated_squares)
+        print(f"{Fore.CYAN}Elapsed time: {time.time() - start}{Fore.RESET}")
+        __show_test_images(image, edges, clustered, rotated_image, rotated_squares, chessboard)
+
+    if chessboard is None:
+        return None
 
     return None
 
@@ -40,6 +45,7 @@ def __show_test_images(
     squares: list[list[Square]],
     rotated_image: MatLike,
     rotated_squares: list[Square],
+    chessboard: Chessboard
 ) -> None:
     utils.show_image(edges)
     # print(f"Found squares: {squares}")
@@ -53,6 +59,15 @@ def __show_test_images(
     line_rotated_image = rotated_image.copy()
     __draw_squares(line_rotated_image, rotated_squares, colors[0])
     utils.show_image(line_rotated_image)
+    
+    if chessboard is not None:
+        wrapped = chessboard.wrapped.copy()
+        h, w , _= wrapped.shape
+        for i in range(1, 8):
+            p = chessboard.corners_of(i, i)[0]
+            cv2.line(wrapped, (0, p[1]), (w, p[1]), (0, 0, 255), 3)
+            cv2.line(wrapped, (p[0], 0), (p[0], h), (0, 0, 255), 3)
+        utils.show_image(wrapped)
 
 
 def __add_fake_squares(squares: list[Square]):

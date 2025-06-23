@@ -2,3 +2,4 @@ opencv-python
 numpy
 stockfish
 scikit-learn
+colorama

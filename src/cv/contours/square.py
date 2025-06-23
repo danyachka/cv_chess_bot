@@ -6,7 +6,7 @@ from typing import Final
 
 from src.cv.utils import calc_points_dist, calc_angle
 
-rate: Final[float] = 0.15
+rate: Final[float] = 0.1
 square_area_percentage_threshold = (1 + rate) / (1 - rate)
 square_area_percentage_threshold_group = (1 + rate) / (1 - rate)
 
@@ -25,7 +25,7 @@ class Square:
     row_num: int = None
 
     def calc_h_angle(self) -> float:
-        return (calc_angle(self.approx[0], self.approx[3]) + calc_angle(self.approx[1], self.approx[2])) / 2
+        return (calc_angle(self.approx[0] + self.approx[1], self.approx[3] + self.approx[2]))
 
     def calc_side(self) -> float:
         return (self.w + self.h) / 2

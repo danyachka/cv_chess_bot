@@ -2,7 +2,7 @@ from src.cv.contours.chessboard_find import find_chessboard
 import cv2
 from pathlib import Path
 
-names = ["new_2.jpg"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
+names = ["1.jpg"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
 
 for name in names:
   print(f"Handling {name}")
