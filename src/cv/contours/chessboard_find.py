@@ -20,10 +20,12 @@ def find_chessboard(image: MatLike, is_test=False) -> MatLike:
     if is_test:
         __add_fake_squares(squares)
     clustered = cluster_squares(squares)
+    print("squares:", len(clustered[0]))
 
     rotated_image, rotated_squares = process_rotation(image, clustered[0])
 
-    grid = create_grid(clustered[0])
+    print("squares:", len(rotated_squares))
+    grid = create_grid(rotated_squares)
     grid.print()
 
     if is_test:

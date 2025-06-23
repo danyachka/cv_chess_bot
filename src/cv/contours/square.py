@@ -21,8 +21,8 @@ class Square:
     area: float
     approx: MatLike # always 4 points only
 
-    col_pos: int = None
-    row_pos: int = None
+    col_num: int = None
+    row_num: int = None
 
     def calc_h_angle(self) -> float:
         return (calc_angle(self.approx[0], self.approx[3]) + calc_angle(self.approx[1], self.approx[2])) / 2
