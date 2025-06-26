@@ -7,8 +7,10 @@ from typing import Final
 from src.cv.utils import calc_points_dist, calc_angle
 
 rate: Final[float] = 0.1
-square_area_percentage_threshold = (1 + rate) / (1 - rate)
-square_area_percentage_threshold_group = (1 + rate) / (1 - rate)
+square_area_percentage_threshold = 1 + rate
+square_area_percentage_threshold_groups_merge = (1 + rate) / (1 - rate)
+
+max_clustering_count = 6
 
 
 @dataclass
@@ -64,7 +66,7 @@ def filter_squares(contours: MatLike) -> list[Square]:
 def cluster_squares(squares: list[Square]) -> list[list[Square]]:
     result = [squares]
     counter = 1
-    while not __check_area_threshold_in_group(result[0]) and (len(result[0]) >= 3):
+    while not __check_area_threshold_in_group(result[0]) and (len(result[0]) >= 3) and (counter <= max_clustering_count):
         print(f"Iterating clustering {counter}")
         counter += 1
         clustered = __cluster_group(result[0])
@@ -117,7 +119,7 @@ def __merge_similar_groups(groups: list[list[Square]], average_vals) -> list[lis
     # assume that most of the squares are on chessboard
     result = [groups[0]]
     for i in range(1, len(groups)):
-        if __check_threshold(areas[0], areas[i], square_area_percentage_threshold_group):
+        if __check_threshold(areas[0], areas[i], square_area_percentage_threshold_groups_merge):
             result[0].extend(groups[i])
         else:
             result.append(groups[i])

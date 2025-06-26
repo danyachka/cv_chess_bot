@@ -10,11 +10,11 @@ from src.cv.contours.square import filter_squares, cluster_squares, Square
 from src.cv.contours.chessboard_builder import build_chess_board, Chessboard
 
 
-def find_chessboard(image: MatLike, is_test=False) -> MatLike:
+def find_chessboard(image: MatLike, is_test=False) -> Chessboard:
     start = time.time()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    sobel = utils.process_sobel(gray)
-    edges = utils.get_edges(gray=sobel, iterations=1)
+    # sobel = utils.process_sobel(gray)
+    edges = utils.get_edges(gray=gray, iterations=1)
     
     contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -54,7 +54,7 @@ def __show_test_images(
     colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
     for i in range(len(squares)):
         __draw_squares(line_img, squares[i], colors[i%len(colors)])
-    utils.show_image(line_img)
+    # utils.show_image(line_img)
 
     line_rotated_image = rotated_image.copy()
     __draw_squares(line_rotated_image, rotated_squares, colors[0])

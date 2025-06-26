@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 import numpy as np
 from cv2.typing import MatLike
+from cv2 import getPerspectiveTransform, warpPerspective
+from colorama import Fore
 
 from src.cv.contours.square import Square
 
@@ -12,19 +14,14 @@ class Chessboard:
     mean_dy: int
     
     def corners_of(self, row, col) -> np.ndarray:
-        h, w, _ = self.wrapped.shape
-
-        horizontal_offset = np.round(w / (2 * self.mean_dx * 8))
-        vertical_offset = np.round(h / (2 * self.mean_dy * 8))
-
-        x = horizontal_offset + col * self.mean_dx
-        y = vertical_offset + row * self.mean_dy
+        x = col * self.mean_dx
+        y = row * self.mean_dy
         return np.array([[x, y], [x, y+self.mean_dy], [x+self.mean_dx, y+self.mean_dy], [x+self.mean_dx, y]], dtype=np.int32)
 
 
 @dataclass
 class Grid:
-    coords: list[list[float]]
+    coords: list[list[Square]]
 
     def print(self):
         for row in self.coords:
@@ -32,27 +29,71 @@ class Grid:
 
 
 def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_test=False) -> Chessboard:
-    grid, mean_w, mean_h = __create_grid(rotated_squares)
+    grid, _, _ = __create_grid(rotated_squares)
     if is_test:
         grid.print()
 
     if __is_borders_empty(grid):
         print("Empty borders!")
         return None
+    
+    left, top, right, bottom = [], [], [], []
+    
+    for i in range(8):
+        l_c = grid.coords[i][0]
+        if l_c is not None:
+            left.append(l_c.approx[0])
+            left.append(l_c.approx[1])
 
-    min_x = np.mean([row[0].x for row in grid.coords if row[0] is not None])
-    min_y = np.mean([s.y for s in grid.coords[0] if s is not None])
+        t_c = grid.coords[0][i]
+        if t_c is not None:
+            top.append(t_c.approx[0])
+            top.append(t_c.approx[3])
 
-    max_x = np.mean([(row[-1].x + row[-1].w) for row in grid.coords if row[-1] is not None])
-    max_y = np.mean([(s.y + s.h) for s in grid.coords[-1] if s is not None])
+        r_c = grid.coords[i][-1]
+        if r_c is not None:
+            right.append(r_c.approx[3])
+            right.append(r_c.approx[2])
 
-    wrapped = rotated_image[int(min_y):int(max_y), int(min_x):int(max_x)]
-    h, w, _ = wrapped.shape
+        b_c = grid.coords[-1][i]
+        if b_c is not None:
+            bottom.append(b_c.approx[1])
+            bottom.append(b_c.approx[2])
+    left, top, right, bottom = np.array(left), np.array(top), np.array(right), np.array(bottom)
+
+    left_l, top_l, right_l, bottom_l = __calc_line(left), __calc_line(top), __calc_line(right), __calc_line(bottom)
+
+    points = np.float32([
+        __calc_intersection(left_l, top_l),
+        __calc_intersection(left_l, bottom_l),
+        __calc_intersection(bottom_l, right_l),
+        __calc_intersection(right_l, top_l),
+    ])
+
+    print(f"Intersections: {Fore.MAGENTA}{points}{Fore.RESET}")
+
+    h, w = 1200, 1200
+    M = getPerspectiveTransform(points, np.float32([[0, 0], [0, h], [w, h], [w, 0]]))
+
+    wrapped = warpPerspective(rotated_image, M, (h, w))
     return Chessboard(
         wrapped=wrapped,
-        mean_dx=w//8,
-        mean_dy=h//8
+        mean_dx=w/8,
+        mean_dy=h/8
     )
+
+
+def __calc_line(points: np.ndarray) -> tuple[float, float]:
+    k, b = np.polyfit([p[0] for p in points], [p[1] for p in points], 1)
+    return k, b
+
+
+def __calc_intersection(l1, l2) -> tuple[int, int]:
+    k1, b1 = l1
+    k2, b2 = l2
+    x = abs((b1 - b2) / (k1 - k2))
+    y = abs(k1 * x + b1)
+    return int(x), int(y)
 
 
 def __is_borders_empty(grid: Grid) -> bool:
@@ -93,7 +134,6 @@ def __create_grid(squares: list[Square]) -> tuple[Grid, float, float]:
         current_square = squares_y_sorted[i]
         d_rows = round((current_square.y - last_square.y) / mean_w)
         current_row += d_rows
-        print(d_rows, current_row)
         current_square.row_num = min(current_row, 7)
         last_square = current_square
         
@@ -111,9 +151,7 @@ def __create_grid(squares: list[Square]) -> tuple[Grid, float, float]:
         last_square = current_square
 
 
-    print(len(squares))
     for s in squares:
-        print(s.row_num, s.col_num)
         grid[s.row_num][s.col_num] = s
     
     return Grid(grid), mean_w, mean_h

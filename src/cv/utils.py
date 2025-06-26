@@ -4,12 +4,15 @@ from cv2.typing import MatLike
 
 
 def get_edges(gray: MatLike, iterations: int):
-    edges = gray
+    edges = cv2.normalize(gray, None, 0, 255, cv2.NORM_MINMAX)
 
-    _, edges = cv2.threshold(edges, 110, 255, cv2.THRESH_BINARY)
+    edges = cv2.medianBlur(edges, 5)
+    edges = cv2.Canny(edges, 100, 170, None, 3)
 
-    edges = cv2.GaussianBlur(edges, (3, 3), 0)
-    edges = cv2.Canny(edges, 60, 140, None, 3)
+    _, edges = cv2.threshold(edges, 150, 255, cv2.THRESH_BINARY)
+    # morphological ops
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
     if iterations != 0:
         edges = increase_lines_thickness(edges=edges, iterations=iterations)
