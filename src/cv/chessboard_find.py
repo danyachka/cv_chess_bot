@@ -7,10 +7,10 @@ from colorama import Fore
 from src.cv import utils
 from src.cv.contours.rotation import process_rotation
 from src.cv.contours.square import filter_squares, cluster_squares, Square
-from src.cv.contours.chessboard_builder import build_chess_board, Chessboard
+from src.cv.chessboard.chessboard_builder import build_chess_board, Chessboard
 
 
-def find_chessboard(image: MatLike, is_test=False) -> Chessboard:
+def find_chessboard(image: MatLike, is_white_sided=True, is_test=False) -> Chessboard:
     start = time.time()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # sobel = utils.process_sobel(gray)
@@ -28,7 +28,7 @@ def find_chessboard(image: MatLike, is_test=False) -> Chessboard:
     rotated_image, rotated_squares = process_rotation(image, clustered[0])
 
     print("squares:", len(rotated_squares))
-    chessboard = build_chess_board(rotated_image, rotated_squares, is_test=is_test)
+    chessboard = build_chess_board(rotated_image, rotated_squares, is_white_sided, is_test=is_test)
     if is_test:
         print(f"{Fore.CYAN}Elapsed time: {time.time() - start}{Fore.RESET}")
         __show_test_images(image, edges, clustered, rotated_image, rotated_squares, chessboard)
@@ -63,10 +63,17 @@ def __show_test_images(
     if chessboard is not None:
         wrapped = chessboard.wrapped.copy()
         h, w , _= wrapped.shape
-        for i in range(1, 8):
-            p = chessboard.corners_of(i, i)[0]
+        for i in range(0, 7):
+            p = chessboard.corners_of(i, i)[-1]
             cv2.line(wrapped, (0, p[1]), (w, p[1]), (0, 0, 255), 3)
             cv2.line(wrapped, (p[0], 0), (p[0], h), (0, 0, 255), 3)
+
+        for i in range(8):
+            for j in range(8):
+                p = chessboard.corners_of(i, j)[1]
+                position = chessboard.positions[i][j]
+                cv2.putText(wrapped, str(position.value)[0], p, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, 2)
+
         utils.show_image(wrapped)
 
 

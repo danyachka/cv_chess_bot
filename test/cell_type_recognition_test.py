@@ -1,8 +1,8 @@
-from src.cv.chessboard_find import find_chessboard
+from src.cv.chessboard.chessboard_position_check import define_position_type
 import cv2
 from pathlib import Path
 
-names = ["new_2.jpg"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
+names = ["cell_ww.png", "cell_w.png", "cell_e.png", "cell_b.png"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
 
 for name in names:
   print(f"Handling {name}")
@@ -10,7 +10,7 @@ for name in names:
 
   image = cv2.imread(path)
 
-  wrapped = find_chessboard(image, is_white_sided=False, is_test=True)
+  wrapped = define_position_type(image, is_black_cell=True, is_test=True)
   if wrapped is not None:
     image = wrapped
     print("wrapped has been gotten successfully")

@@ -4,19 +4,9 @@ from cv2.typing import MatLike
 from cv2 import getPerspectiveTransform, warpPerspective
 from colorama import Fore
 
+from src.cv.chessboard.chessboard import Chessboard
+from src.cv.chessboard.chessboard_position_check import build_positions
 from src.cv.contours.square import Square
-
-
-@dataclass
-class Chessboard:
-    wrapped: MatLike
-    mean_dx: int
-    mean_dy: int
-    
-    def corners_of(self, row, col) -> np.ndarray:
-        x = col * self.mean_dx
-        y = row * self.mean_dy
-        return np.array([[x, y], [x, y+self.mean_dy], [x+self.mean_dx, y+self.mean_dy], [x+self.mean_dx, y]], dtype=np.int32)
 
 
 @dataclass
@@ -28,7 +18,7 @@ class Grid:
             print(*["**" if s is not None else "__" for s in row])
 
 
-def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_test=False) -> Chessboard:
+def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_white_sided, is_test=False) -> Chessboard:
     grid, _, _ = __create_grid(rotated_squares)
     if is_test:
         grid.print()
@@ -73,13 +63,19 @@ def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_
     print(f"Intersections: {Fore.MAGENTA}{points}{Fore.RESET}")
 
     h, w = 1200, 1200
-    M = getPerspectiveTransform(points, np.float32([[0, 0], [0, h], [w, h], [w, 0]]))
+    end_points = (
+        np.float32([[0, 0], [0, h], [w, h], [w, 0]]) if is_white_sided
+        else np.float32([[w, h], [w, 0], [0, 0], [0, h]])
+    )
+    M = getPerspectiveTransform(points, end_points)
 
     wrapped = warpPerspective(rotated_image, M, (h, w))
+    dx, dy = w/8, h/8
     return Chessboard(
         wrapped=wrapped,
-        mean_dx=w/8,
-        mean_dy=h/8
+        mean_dx=dx,
+        mean_dy=dy,
+        positions=build_positions(dx, dy, wrapped)
     )
 
 
