@@ -5,6 +5,7 @@ import numpy as np
 from colorama import Fore
 
 from src.cv import utils
+from src.cv.chessboard.chessboard import Position
 from src.cv.contours.rotation import process_rotation
 from src.cv.contours.square import filter_squares, cluster_squares, Square
 from src.cv.chessboard.chessboard_builder import build_chess_board, Chessboard
@@ -72,8 +73,10 @@ def __show_test_images(
             for j in range(8):
                 p = chessboard.corners_of(i, j)[1]
                 position = chessboard.positions[i][j]
+                if position == Position.EMPTY:
+                    continue
                 s = f'{position.name[0]}, ({i}, {j})'
-                cv2.putText(wrapped, s, p, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, 2)
+                cv2.putText(wrapped, s, p, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, 2)
 
         utils.show_image(wrapped)
 

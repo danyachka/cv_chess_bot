@@ -19,7 +19,7 @@ def build_positions(dx: float, dy: float, wrapped: MatLike) -> list[list[Positio
                         corners[0][1] : corners[2][1], corners[0][0] : corners[2][0]
                     ],
                     is_black_cell=(8*row + col) % 2 == 0,
-                    is_test=(row == 0) and (col == 5)
+                    # is_test=(row==7 and col==7)
                 )
             )
         result.append(tuple(row_array))
@@ -30,15 +30,23 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
     cell_size = cell_image.shape[0]
     gray = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
     
-    thresh = utils.get_edges(gray, 0)
+    blurred = cv2.medianBlur(gray, 3)
+    edges = cv2.Canny(blurred, 60, 120, None, 3)
+
+    _, edges = cv2.threshold(edges, 150, 255, cv2.THRESH_BINARY)
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+    thresh = edges
 
     contours = cv2.HoughCircles(
         thresh, cv2.HOUGH_GRADIENT, 1, 
         minDist=1,
         param1=255, 
-        param2=13,
-        minRadius=int(cell_size*0.33), 
-        maxRadius=int(cell_size*0.9)
+        param2=20,
+        minRadius=int(cell_size*0.2), 
+        maxRadius=int(cell_size)
     )
     if is_test:
         utils.show_image(cell_image)
@@ -62,7 +70,7 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
             continue
         
         dist = utils.calc_points_dist(center, (circle[0], circle[1]))
-        if dist > circle[2]:
+        if dist > circle[2] * 1.3:
             continue
 
         valid_contours.append(circle)
