@@ -2,7 +2,7 @@ from src.cv.chessboard.chessboard_position_check import define_position_type
 import cv2
 from pathlib import Path
 
-names = ["cell_ww.png", "cell_w.png", "cell_e.png", "cell_b.png"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
+names = ["cell_bb.png"]#, "cell_w.png", "cell_e.png", "cell_b.png"]#, "1.jpg", "clear_0.jpg", "clear_1.jpg"]
 
 for name in names:
   print(f"Handling {name}")

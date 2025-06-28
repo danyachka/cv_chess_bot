@@ -7,20 +7,22 @@ from src.cv import utils
 
 
 def build_positions(dx: float, dy: float, wrapped: MatLike) -> list[list[Position]]:
+    print("Checking positions")
     result = []
-    for i in range(8):
-        row = []
-        for j in range(8):
-            corners = corners_of(dx, dy, i, j)
-            row.append(
+    for row in range(8):
+        row_array = []
+        for col in range(8):
+            corners = corners_of(dx, dy, row, col)
+            row_array.append(
                 define_position_type(
                     wrapped[
-                        corners[0][0] : corners[2][0], corners[0][1] : corners[2][1]
+                        corners[0][1] : corners[2][1], corners[0][0] : corners[2][0]
                     ],
-                    is_black_cell=(8*i + j) % 2 == 0
+                    is_black_cell=(8*row + col) % 2 == 0,
+                    is_test=(row == 0) and (col == 5)
                 )
             )
-        result.append(tuple(row))
+        result.append(tuple(row_array))
     return tuple(result)
 
 
@@ -29,39 +31,37 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
     gray = cv2.cvtColor(cell_image, cv2.COLOR_BGR2GRAY)
     
     thresh = utils.get_edges(gray, 0)
-    # contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = cv2.HoughCircles(
         thresh, cv2.HOUGH_GRADIENT, 1, 
-        minDist=2,
+        minDist=1,
         param1=255, 
         param2=13,
         minRadius=int(cell_size*0.33), 
         maxRadius=int(cell_size*0.9)
     )
+    if is_test:
+        utils.show_image(cell_image)
+        utils.show_image(thresh)
+
     if contours is None:
         return Position.EMPTY
     circles = np.uint16(contours[0, :])
 
     if is_test:
-        utils.show_image(thresh)
         __show_drafted_circles(circles, cell_image)
     
-    if len(circles) == 0:
-        return Position.EMPTY
-    
     center = (cell_size // 2, cell_size // 2)
-    min_area = 0.2 * (cell_size ** 2)
     max_area = 0.85 * (cell_size ** 2)
     
     valid_contours = []
     for circle in circles:
         area = np.pi * circle[2]**2
         
-        if area < min_area or area > max_area:
+        if area > max_area:
             continue
         
-        dist = utils.calc_points_dist(center, (circle[0], circle[1])) * 1.2
+        dist = utils.calc_points_dist(center, (circle[0], circle[1]))
         if dist > circle[2]:
             continue
 
@@ -77,12 +77,15 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
     main_contour = max(valid_contours, key=lambda el: el[2])
     
     mask = np.zeros_like(gray)
-    cv2.circle(mask, (main_contour[0], main_contour[1]), main_contour[2], (0, 255, 0), 2)
+    cv2.circle(mask, (main_contour[0], main_contour[1]), main_contour[2], 255, -1)
+    
+    if is_test:
+        utils.show_image(mask)
     
     mean_color_bgr = cv2.mean(cell_image, mask=mask)[:3]
     mean_color_hsv = cv2.cvtColor(np.uint8([[mean_color_bgr]]), cv2.COLOR_BGR2HSV)[0][0]
     
-    if mean_color_hsv[2] > 140: 
+    if mean_color_hsv[2] > 120: 
         piece_color = Position.WHITE
     elif mean_color_hsv[2] < 80:
         piece_color = Position.BLACK

@@ -10,7 +10,7 @@ from src.cv.contours.square import filter_squares, cluster_squares, Square
 from src.cv.chessboard.chessboard_builder import build_chess_board, Chessboard
 
 
-def find_chessboard(image: MatLike, is_white_sided=True, is_test=False) -> Chessboard:
+def find_chessboard(image: MatLike, is_white_sided, is_test=False) -> Chessboard:
     start = time.time()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     # sobel = utils.process_sobel(gray)
@@ -72,7 +72,8 @@ def __show_test_images(
             for j in range(8):
                 p = chessboard.corners_of(i, j)[1]
                 position = chessboard.positions[i][j]
-                cv2.putText(wrapped, str(position.value)[0], p, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3, 2)
+                s = f'{position.name[0]}, ({i}, {j})'
+                cv2.putText(wrapped, s, p, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, 2)
 
         utils.show_image(wrapped)
 
