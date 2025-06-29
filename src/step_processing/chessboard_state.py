@@ -1,15 +1,16 @@
 from dataclasses import dataclass
+from typing import Final
 
 from src.step_processing.chess_piece import Piece, PieceType
 
 
-start_fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+start_fen: Final[str] = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 @dataclass
 class ChessboardState:
     grid: tuple[tuple[Piece]]
 
-    castling = str
+    castling: str
 
     is_white_step_side: bool
 
@@ -39,7 +40,7 @@ class ChessboardState:
             row: tuple[Piece] = self.grid[7 - i]
 
             for j in range(8):
-                char = row[j].to_str()
+                char = str(row[j])
 
                 if char == '*':
                     empty_counter += 1
@@ -105,9 +106,9 @@ def create_from_fen(fen: str) -> ChessboardState:
     step = int(array[-1])
 
     return ChessboardState(
-        ((p for p in row) for row in grid),
-        is_white_step_side=white,
+        grid=((p for p in row) for row in grid),
         castling=castling,
+        is_white_step_side=white,
         coords_pan_did_long_step=coords_pan_did_long_step,
         draw_counter=draw_counter,
         step_num=step

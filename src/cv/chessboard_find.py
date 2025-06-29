@@ -20,24 +20,21 @@ def find_chessboard(image: MatLike, is_white_sided, is_test=False) -> Chessboard
     contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     squares = filter_squares(contours)
-    print(f"Total squares: {len(squares)}")
     if is_test:
         __add_fake_squares(squares)
     clustered = cluster_squares(squares)
-    print("squares:", len(clustered[0]))
+    if is_test:
+        print(f"Total squares: {len(squares)}")
+        print("squares:", len(clustered[0]))
 
     rotated_image, rotated_squares = process_rotation(image, clustered[0])
 
-    print("squares:", len(rotated_squares))
     chessboard = build_chess_board(rotated_image, rotated_squares, is_white_sided, is_test=is_test)
     if is_test:
         print(f"{Fore.CYAN}Elapsed time: {time.time() - start}{Fore.RESET}")
         __show_test_images(image, edges, clustered, rotated_image, rotated_squares, chessboard)
 
-    if chessboard is None:
-        return None
-
-    return None
+    return chessboard
 
 
 def __show_test_images(

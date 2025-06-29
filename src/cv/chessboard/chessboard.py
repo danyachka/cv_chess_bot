@@ -1,7 +1,10 @@
 from dataclasses import dataclass
+import cv2
 from cv2.typing import MatLike
 from enum import Enum
 import numpy as np
+
+from src.cv import utils
 
 
 class Position(Enum):
@@ -20,6 +23,14 @@ class Chessboard:
 
     def corners_of(self, row, col) -> np.ndarray:
         return corners_of(self.mean_dx, self.mean_dy, row, col)
+    
+    def show_highlighted_squares(self, positions: list[tuple[int, int]]) -> None:
+        image = self.wrapped.copy()
+
+        contours = [self.corners_of(i, j) for i, j in positions]
+            
+        cv2.drawContours(image, contours, 0, (255, 0, 255), 2)
+        utils.show_image(image, "Found positions")
     
 
 def corners_of(mean_dx, mean_dy, row, col) -> np.ndarray:

@@ -1,12 +1,12 @@
 import cv2
 
 
-def select_camera():
+def select_camera() -> cv2.VideoCapture | None:
     cameras = list_cameras()
     
     if len(cameras) == 0:
         print("No available camera has been found!")
-        return
+        return None
     
     print("Available cameras:")
     for cam in cameras:
@@ -26,7 +26,7 @@ def select_camera():
 
     if not cap.isOpened():
         print("Exception: can't open this camera")
-        return
+        return None
     return cap
     
 

@@ -16,7 +16,7 @@ class Piece:
     type: PieceType
     white: bool
 
-    def to_str(self) -> str:
+    def __str__(self) -> str:
         if self.white:
             self.type.name.upper()
         else:
