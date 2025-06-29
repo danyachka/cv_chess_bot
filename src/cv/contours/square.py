@@ -36,7 +36,6 @@ class Square:
 def filter_squares(contours: MatLike) -> list[Square]:
     squares = []
 
-    print(len(contours))
     for cnt in contours:
         approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
 
@@ -67,11 +66,9 @@ def cluster_squares(squares: list[Square]) -> list[list[Square]]:
     result = [squares]
     counter = 1
     while not __check_area_threshold_in_group(result[0]) and (len(result[0]) >= 3) and (counter <= max_clustering_count):
-        print(f"Iterating clustering {counter}")
         counter += 1
         clustered = __cluster_group(result[0])
         result = [*clustered, *result[1:]]
-    print("Resulting lens = ", *[len(item) for item in result])
     return result
 
 
@@ -105,10 +102,10 @@ def __cluster_group(squares: list[Square]) -> list[list[Square]]:
     for i, val in enumerate(labels.ravel()):
         result[val][1].append(squares[i])
     result = sorted(result, key=lambda x: len(x[1]), reverse=True)
-    print(
-        ', '.join([str(i + 1) + ': ' + str(len(result[i])) for i in range(len(result))]),
-        f", center = {average_vals}"
-    )
+    # print(
+    #     ', '.join([str(i + 1) + ': ' + str(len(result[i])) for i in range(len(result))]),
+    #     f", center = {average_vals}"
+    # )
 
     return __merge_similar_groups([item[1] for item in result], [item[0] for item in result])
 

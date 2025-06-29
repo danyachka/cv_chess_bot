@@ -29,7 +29,7 @@ def main(elo: int):
         stepProcessor.make_bots_move()
 
     while True:
-        s = input(f"{Fore.GREEN}Print q to end game and any other letter when your move is made!{Fore.RESET}")
+        s = input(f"""{Fore.GREEN}Print {Fore.MAGENTA}q{Fore.GREEN} to {Fore.MAGENTA}end game{Fore.GREEN} or {Fore.MAGENTA}any{Fore.GREEN} other letter when your move is made!{Fore.RESET}""")
         if s == 'q':
             return
         
@@ -38,7 +38,7 @@ def main(elo: int):
             print(f"{Fore.RED}Exception: Can't read a picture{Fore.RESET}")
         
         ## chessboard
-        new_chess_board: Chessboard = find_chessboard(frame)
+        new_chess_board: Chessboard = find_chessboard(frame, is_white_sided=stepProcessor.bot_playing_side==PlayingSide.WHITE)
         if new_chess_board is None:
             print(f"{Fore.RED}Exception: Can't find chessboard{Fore.RESET}")
             continue

@@ -12,27 +12,30 @@ from src.cv.chessboard.chessboard_builder import build_chess_board, Chessboard
 
 
 def find_chessboard(image: MatLike, is_white_sided, is_test=False) -> Chessboard:
+    # pre-process image
     start = time.time()
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # sobel = utils.process_sobel(gray)
     edges = utils.get_edges(gray=gray, iterations=1)
     
+    # squares
     contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
     squares = filter_squares(contours)
     if is_test:
         __add_fake_squares(squares)
     clustered = cluster_squares(squares)
     if is_test:
         print(f"Total squares: {len(squares)}")
-        print("squares:", len(clustered[0]))
+    print("Found squares:", len(clustered[0]))
 
+    # get chessboard
     rotated_image, rotated_squares = process_rotation(image, clustered[0])
-
     chessboard = build_chess_board(rotated_image, rotated_squares, is_white_sided, is_test=is_test)
+    
+    # test
+    __show_line_rotated_image(rotated_image, rotated_squares)
     if is_test:
         print(f"{Fore.CYAN}Elapsed time: {time.time() - start}{Fore.RESET}")
-        __show_test_images(image, edges, clustered, rotated_image, rotated_squares, chessboard)
+        __show_test_images(image, edges, clustered, chessboard)
 
     return chessboard
 
@@ -41,22 +44,16 @@ def __show_test_images(
     image,
     edges,
     squares: list[list[Square]],
-    rotated_image: MatLike,
-    rotated_squares: list[Square],
     chessboard: Chessboard
 ) -> None:
     utils.show_image(edges)
-    # print(f"Found squares: {squares}")
+    print(f"Found squares: {squares}")
     
     line_img = image.copy()
     colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
     for i in range(len(squares)):
         __draw_squares(line_img, squares[i], colors[i%len(colors)])
     # utils.show_image(line_img)
-
-    line_rotated_image = rotated_image.copy()
-    __draw_squares(line_rotated_image, rotated_squares, colors[0])
-    utils.show_image(line_rotated_image)
     
     if chessboard is not None:
         wrapped = chessboard.wrapped.copy()
@@ -76,6 +73,11 @@ def __show_test_images(
                 cv2.putText(wrapped, s, p, cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, 2)
 
         utils.show_image(wrapped)
+
+def __show_line_rotated_image(rotated_image, rotated_squares):
+    line_rotated_image = rotated_image.copy()
+    __draw_squares(line_rotated_image, rotated_squares, (0, 255, 0))
+    utils.show_image(line_rotated_image)
 
 
 def __add_fake_squares(squares: list[Square]):

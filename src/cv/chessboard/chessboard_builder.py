@@ -1,32 +1,37 @@
-from dataclasses import dataclass
 import numpy as np
 from cv2.typing import MatLike
 from cv2 import getPerspectiveTransform, warpPerspective
-from colorama import Fore
 
 from src.cv.chessboard.chessboard import Chessboard
+from src.cv.chessboard.grid import Grid, create_grid
 from src.cv.chessboard.chessboard_position_check import build_positions
+from src.cv.chessboard.grid_expanding import expand_grid
 from src.cv.contours.square import Square
 
 
-@dataclass
-class Grid:
-    coords: list[list[Square]]
-
-    def print(self):
-        for row in self.coords:
-            print(*["**" if s is not None else "__" for s in row])
-
-
 def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_white_sided, is_test=False) -> Chessboard:
-    grid, _, _ = __create_grid(rotated_squares)
+    grid = create_grid(rotated_squares)
     if is_test:
         grid.print()
+
+    if __is_borders_empty(grid):
+        grid = expand_grid(rotated_image, grid, rotated_squares, is_test)
 
     if __is_borders_empty(grid):
         print("Empty borders!")
         return None
     
+    wrapped = __get_wrapped_chessboard(grid, rotated_image, is_white_sided)
+    h, w = wrapped.shape[:2]
+    dx, dy = w/8, h/8
+    return Chessboard(
+        wrapped=wrapped,
+        mean_dx=dx,
+        mean_dy=dy,
+        positions=build_positions(dx, dy, wrapped)
+    )
+
+def __get_wrapped_chessboard(grid: Grid, rotated_image: MatLike, is_white_sided: bool):
     left, top, right, bottom = [], [], [], []
     
     for i in range(8):
@@ -60,7 +65,7 @@ def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_
         __calc_intersection(right_l, top_l),
     ])
 
-    print(f"Intersections: {Fore.MAGENTA}{points}{Fore.RESET}")
+    # print(f"Intersections: {Fore.MAGENTA}{points}{Fore.RESET}")
 
     h, w = 1200, 1200
     end_points = (
@@ -70,13 +75,7 @@ def build_chess_board(rotated_image: MatLike, rotated_squares: list[Square], is_
     M = getPerspectiveTransform(points, end_points)
 
     wrapped = warpPerspective(rotated_image, M, (h, w))
-    dx, dy = w/8, h/8
-    return Chessboard(
-        wrapped=wrapped,
-        mean_dx=dx,
-        mean_dy=dy,
-        positions=build_positions(dx, dy, wrapped)
-    )
+    return wrapped
 
 
 def __calc_line(points: np.ndarray) -> tuple[float, float]:
@@ -109,47 +108,5 @@ def __is_borders_empty(grid: Grid) -> bool:
     if (is_array_empty([row[-1] for row in grid.coords])): 
         return True
     return False
-
-
-
-def __create_grid(squares: list[Square]) -> tuple[Grid, float, float]:
-    if not squares:
-        return Grid([[None for _ in range(8)] for _ in range(8)])
-    grid = [[None for _ in range(8)] for _ in range(8)]
-
-    mean_w = np.mean([s.w for s in squares])
-    mean_h = np.mean([s.h for s in squares])
-    
-    # rows
-    squares_y_sorted = sorted(squares, key=lambda s: s.y)
-    current_row = 0
-    last_square = squares_y_sorted[0]
-    last_square.row_num = current_row
-
-    for i in range(1, len(squares_y_sorted)):
-        current_square = squares_y_sorted[i]
-        d_rows = round((current_square.y - last_square.y) / mean_w)
-        current_row += d_rows
-        current_square.row_num = min(current_row, 7)
-        last_square = current_square
-        
-    # cols
-    squares_x_sorted = sorted(squares, key=lambda s: s.x)
-    current_col = 0
-    last_square = squares_x_sorted[0]
-    last_square.col_num = current_col
-
-    for i in range(1, len(squares_x_sorted)):
-        current_square = squares_x_sorted[i]
-        d_rows = round((current_square.x - last_square.x) / mean_h)
-        current_col += d_rows
-        current_square.col_num = min(current_col, 7)
-        last_square = current_square
-
-
-    for s in squares:
-        grid[s.row_num][s.col_num] = s
-    
-    return Grid(grid), mean_w, mean_h
 
     

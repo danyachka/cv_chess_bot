@@ -69,6 +69,7 @@ class StepProcessor:
         # Record player's move
         print(f"{Fore.CYAN}Nice! You've done move {move.name}{Fore.RESET}")
         self.stockfish_board.make_moves_from_current_position([move.name])
+        self.current_fen = create_from_fen(self.stockfish_board.get_fen_position())
         self.stockfish_board.get_board_visual()
 
         return self.__is_game_ended(False)
@@ -90,9 +91,6 @@ class StepProcessor:
             old_piece: Piece = self.current_fen.grid[i][j]
             new_data: Position = new_chessboard.positions[i][j]
 
-            if not self.__compare(old_piece, new_data):
-                continue
-            print(f"Updated position: ({i}, {j}) old: {old_piece}, new: {new_data.name}")
             if self.__is_enemy(new_data):
                 to_positions.append((i, j))
             elif self.__was_enemy(old_piece):
@@ -173,7 +171,7 @@ class StepProcessor:
         return None
     
     def __is_game_ended(self, is_bot) -> bool:
-        game_result = self.stockfish_board.__get_game_over_status()
+        game_result = self.__get_game_over_status()
         if game_result is None:
             return False
         print(f"{Fore.MAGENTA}{'Bot' if is_bot else 'You'} has ended game! {game_result.upper()}!{Fore.RESET}")

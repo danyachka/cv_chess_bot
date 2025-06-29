@@ -7,7 +7,6 @@ from src.cv import utils
 
 
 def build_positions(dx: float, dy: float, wrapped: MatLike) -> list[list[Position]]:
-    print("Checking positions")
     result = []
     for row in range(8):
         row_array = []
@@ -44,9 +43,9 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
         thresh, cv2.HOUGH_GRADIENT, 1, 
         minDist=1,
         param1=255, 
-        param2=20,
-        minRadius=int(cell_size*0.2), 
-        maxRadius=int(cell_size)
+        param2=18,
+        minRadius=int(cell_size/5), 
+        maxRadius=int(cell_size/1.8)
     )
     if is_test:
         utils.show_image(cell_image)

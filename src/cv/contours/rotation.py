@@ -8,7 +8,7 @@ from src.cv.contours.square import Square
 def process_rotation(image: MatLike, squares: list[Square]) -> tuple[MatLike, list[Square]]:
     horizontal_angle = np.mean([s.calc_h_angle() for s in squares])
     angle = horizontal_angle
-    print(f"Horizontal angle = {horizontal_angle}, rotate angle = {np.rad2deg(angle)}, squares count = {len(squares)}")
+    # print(f"Horizontal angle = {horizontal_angle}, rotate angle = {np.rad2deg(angle)}, squares count = {len(squares)}")
 
     h, w = image.shape[:2]
     center = (w//2, h//2)
