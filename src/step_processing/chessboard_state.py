@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Final
 
+from colorama import Fore
+
 from src.step_processing.chess_piece import Piece, PieceType
 
 
@@ -20,6 +22,10 @@ class ChessboardState:
 
     step_num: int
 
+    def print(self):
+        for row in self.grid:
+            print(*[f"{Fore.BLUE if not p.white else ''}{p.type.name}{Fore.RESET}" for p in row])
+
     def can_castle(self, white: bool, short_side: bool) -> bool:
         if white:
             if short_side:
@@ -31,45 +37,6 @@ class ChessboardState:
                 return 'q' in self.castling
             else:
                 return 'k' in self.castling
-    
-    def to_fen(self) -> str:
-        fen = []
-
-        for i in range(len(self.grid)):
-            empty_counter = 0
-            row: tuple[Piece] = self.grid[7 - i]
-
-            for j in range(8):
-                char = str(row[j])
-
-                if char == '*':
-                    empty_counter += 1
-                else:
-                    if empty_counter != 0:
-                        fen.append(str(empty_counter))
-                        empty_counter = 0
-                    fen.append(char)
-            if empty_counter != 0:
-                fen.append(str(empty_counter))
-            if i != 7:
-              fen.append('/')
-        
-        fen.append(" ")
-        fen.append('w' if self.is_white_step_side else 'b')
-
-        fen.append(" ")
-        fen.append(self.castling)
-
-        fen.append(" ")
-        fen.append(self.coords_pan_did_long_step)
-
-        fen.append(" ")
-        fen.append(str(self.draw_counter))
-
-        fen.append(" ")
-        fen.append(str(self.step_num))
-
-        return ''.join(fen)
 
 
 def create_from_fen(fen: str) -> ChessboardState:
@@ -77,22 +44,25 @@ def create_from_fen(fen: str) -> ChessboardState:
 
     array = fen.split(' ')
 
-    positions = array[0].replace("/", "")
-
+    positions = array[0]
     pos = 0
+    row = 7
+    col = 0
     for i in range(len(positions)):
-        row = 7 - pos//8
-        col = pos % 8
-
         char = positions[i]
 
         if char.isdigit():
-            pos += int(char)
+            n = int(char)
+            pos += n
+            col += n
         elif char == '/':
+            row -= 1
+            col = 0
             continue
         else:
             piece = PieceType(char.upper())
             grid[row][col] = Piece(piece, char.isupper())
+            col += 1
 
     # step side
     white = array[1] == 'w'
@@ -103,10 +73,10 @@ def create_from_fen(fen: str) -> ChessboardState:
 
     draw_counter = int(array[4])
 
-    step = int(array[-1])
+    step = int(array[-1])        
 
     return ChessboardState(
-        grid=((p for p in row) for row in grid),
+        grid=tuple(tuple(p for p in row) for row in grid),
         castling=castling,
         is_white_step_side=white,
         coords_pan_did_long_step=coords_pan_did_long_step,

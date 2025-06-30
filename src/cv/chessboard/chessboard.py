@@ -25,11 +25,13 @@ class Chessboard:
         return corners_of(self.mean_dx, self.mean_dy, row, col)
     
     def show_highlighted_squares(self, positions: list[tuple[int, int]]) -> None:
+        print(positions)
         image = self.wrapped.copy()
 
-        contours = [self.corners_of(i, j) for i, j in positions]
+        for i, j in positions:
+            contours = [self.corners_of(i, j)]
             
-        cv2.drawContours(image, contours, 0, (255, 0, 255), 2)
+            cv2.drawContours(image, contours, 0, (255, 0, 255), 2)
         utils.show_image(image, "Found positions")
     
 

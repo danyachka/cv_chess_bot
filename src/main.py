@@ -28,6 +28,8 @@ def main(elo: int):
     if stepProcessor.bot_playing_side == PlayingSide.WHITE:
         stepProcessor.make_bots_move()
 
+    stepProcessor.current_fen.print()
+
     while True:
         s = input(f"""{Fore.GREEN}Print {Fore.MAGENTA}q{Fore.GREEN} to {Fore.MAGENTA}end game{Fore.GREEN} or {Fore.MAGENTA}any{Fore.GREEN} other letter when your move is made!{Fore.RESET}""")
         if s == 'q':
@@ -38,15 +40,20 @@ def main(elo: int):
             print(f"{Fore.RED}Exception: Can't read a picture{Fore.RESET}")
         
         ## chessboard
-        new_chess_board: Chessboard = find_chessboard(frame, is_white_sided=stepProcessor.bot_playing_side==PlayingSide.WHITE)
+        new_chess_board: Chessboard = find_chessboard(frame, is_white_sided=stepProcessor.bot_playing_side==PlayingSide.WHITE, is_test=False)
         if new_chess_board is None:
             print(f"{Fore.RED}Exception: Can't find chessboard{Fore.RESET}")
             continue
 
         ## process step
-        if stepProcessor.process_enemy_step(new_chess_board):
+        if not stepProcessor.process_enemy_step(new_chess_board):
+            continue
+        if stepProcessor.is_game_ended(False):
             break
-        if stepProcessor.make_bots_move():
+
+        if not stepProcessor.make_bots_move():
+            continue
+        if stepProcessor.is_game_ended(True):
             break
         
     capture.release()

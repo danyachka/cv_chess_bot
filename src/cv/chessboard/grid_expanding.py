@@ -47,27 +47,9 @@ def expand_grid(rotated_image: MatLike, grid: Grid, rotated_squares: list[Square
     if is_test:
         print(f"Circles detected = {len(circles)}")
 
-    new_squares: list[Square] = []
-    for x, y, _ in circles:
-        if close_x-x_0 <= x <= far_x-x_0 and close_y-y_0 <= y <= far_y-y_0:
-            continue
-        # tl_x = int(x_0 + mean_w*np.floor(x / mean_w))
-        # tl_y = int(y_0 + mean_h*np.floor(y / mean_h))
-        tl_x = int(x_0 + x - 0.5*mean_w)
-        tl_y = int(y_0 + y - 0.5*mean_h)
-
-        new_squares.append(
-            Square(
-                tl_x, tl_y, mean_w, mean_h, 
-                area=mean_w*mean_h,
-                approx=np.int32([
-                    (tl_x, tl_y),
-                    (tl_x, tl_y + mean_h),
-                    (tl_x + mean_w, tl_y + mean_h),
-                    (tl_x + mean_w, tl_y),
-                ])
-            )
-        )
+    new_squares = __get_new_squares(
+        circles, grid, close_x, close_y, far_x, far_y, x_0, y_0, mean_w, mean_h, e_rows, e_cols
+    )
     
     if is_test:
         utils.show_image(wrapped)
@@ -84,3 +66,48 @@ def expand_grid(rotated_image: MatLike, grid: Grid, rotated_squares: list[Square
 
     return create_grid(rotated_squares)
 
+
+def __get_new_squares(
+        circles: list[MatLike],
+        grid: Grid,
+        close_x, close_y, far_x, far_y,
+        x_0, y_0,
+        mean_w, mean_h,
+        e_rows, e_cols
+) -> list[Square]:
+    new_squares: list[Square] = []
+    for x, y, _ in circles:
+        if close_x-x_0 <= x <= far_x-x_0 and close_y-y_0 <= y <= far_y-y_0:
+            continue
+        # top left corner
+        tl_x = int(x_0 + x - 0.5*mean_w)
+        tl_y = int(y_0 + y - 0.5*mean_h)
+
+        mean_approx = np.zeros((4, 2), dtype=np.float32)
+        counter = 0
+        if x < close_x-x_0 or x > far_x-x_0:
+            col_n = 0 if x < close_x-x_0 else 7 - e_cols
+            for i in range(8):
+                s = grid.coords[i][col_n]
+                if s is None:
+                    continue
+                counter += 1
+                mean_approx += s.approx - s.approx[0]
+        elif y < close_y-y_0 or y > far_y-y_0:
+            row_n = 0 if y < close_y-y_0 else 7 - e_rows
+            for s in grid.coords[row_n]:
+                if s is None:
+                    continue
+                counter += 1
+                mean_approx += s.approx - s.approx[0]
+        
+        mean_approx = (mean_approx / counter) + (tl_x, tl_y)
+
+        new_squares.append(
+            Square(
+                tl_x, tl_y, mean_w, mean_h, 
+                area=mean_w*mean_h,
+                approx=np.int32(mean_approx)
+            )
+        )
+    return new_squares

@@ -43,9 +43,9 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
         thresh, cv2.HOUGH_GRADIENT, 1, 
         minDist=1,
         param1=255, 
-        param2=18,
+        param2=20,
         minRadius=int(cell_size/5), 
-        maxRadius=int(cell_size/1.8)
+        maxRadius=int(cell_size*0.6)
     )
     if is_test:
         utils.show_image(cell_image)
@@ -94,11 +94,11 @@ def define_position_type(cell_image: np.ndarray, is_black_cell: bool, is_test=Fa
     
     if mean_color_hsv[2] > 120: 
         piece_color = Position.WHITE
-    elif mean_color_hsv[2] < 80:
+    elif mean_color_hsv[2] < 70:
         piece_color = Position.BLACK
     else:
         if is_black_cell:
-            piece_color = Position.BLACK if mean_color_hsv[2] < 160 else Position.WHITE
+            piece_color = Position.BLACK if mean_color_hsv[2] < 150 else Position.WHITE
         else:
             piece_color = Position.WHITE if mean_color_hsv[2] > 100 else Position.BLACK
     

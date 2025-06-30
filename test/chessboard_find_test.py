@@ -3,8 +3,8 @@ import cv2
 from pathlib import Path
 
 names = [
-    # "new_2.jpg",
-    "1.jpg",
+    "new_2.jpg",
+    # "1.jpg",
     # "clear_0.jpg",
     # "clear_1.jpg"
 ]

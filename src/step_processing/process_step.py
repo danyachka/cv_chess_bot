@@ -48,7 +48,7 @@ class StepProcessor:
         move = self.__find_move(changed_positions, new_chessboard)
 
         if move is None:
-            print(f"{Fore.RED}Exception: Couldn't find moves!{Fore.RESET}")
+            print(f"{Fore.RED}Exception: Couldn't find move!{Fore.RESET}")
             new_chessboard.show_highlighted_squares(changed_positions)
             return False
         
@@ -72,7 +72,7 @@ class StepProcessor:
         self.current_fen = create_from_fen(self.stockfish_board.get_fen_position())
         self.stockfish_board.get_board_visual()
 
-        return self.__is_game_ended(False)
+        return True
     
     def make_bots_move(self) -> bool:
         bot_move = self.stockfish_board.get_best_move_time(time=500)
@@ -81,7 +81,7 @@ class StepProcessor:
         self.current_fen = create_from_fen(self.stockfish_board.get_fen_position())
         self.stockfish_board.get_board_visual()
 
-        return self.__is_game_ended(True)
+        return True
     
     def __find_move(self, changed_positions: list[tuple[int, int]], new_chessboard: Chessboard) -> Move:
         from_positions: list[tuple[int, int]] = []
@@ -108,12 +108,12 @@ class StepProcessor:
         
     def __find_changed_positions(self, new_chessboard: Chessboard) -> list[tuple[int, int]]:
         changed = []
-        for i in len(8):
-            for j in len(8):
+        for i in range(8):
+            for j in range(8):
                 old_piece: Piece = self.current_fen.grid[i][j]
                 new_data: Position = new_chessboard.positions[i][j]
 
-                if not self.__compare(old_piece, new_data):
+                if not self.__is_changed(old_piece, new_data):
                     continue
                 changed.append((i, j))
         return changed
@@ -132,7 +132,7 @@ class StepProcessor:
             return piece.white and piece.type != PieceType.EMPTY
 
 
-    def __compare(self, old_piece: Piece, new_position: Position) -> bool:
+    def __is_changed(self, old_piece: Piece, new_position: Position) -> bool:
         match new_position:
             case Position.WHITE:
                 return (not old_piece.white and old_piece.type != PieceType.EMPTY) or old_piece.type == PieceType.EMPTY
@@ -170,7 +170,7 @@ class StepProcessor:
             return Move(left_from, right_to, "O-O")
         return None
     
-    def __is_game_ended(self, is_bot) -> bool:
+    def is_game_ended(self, is_bot) -> bool:
         game_result = self.__get_game_over_status()
         if game_result is None:
             return False

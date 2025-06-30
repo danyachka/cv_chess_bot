@@ -32,8 +32,8 @@ def find_chessboard(image: MatLike, is_white_sided, is_test=False) -> Chessboard
     chessboard = build_chess_board(rotated_image, rotated_squares, is_white_sided, is_test=is_test)
     
     # test
-    __show_line_rotated_image(rotated_image, rotated_squares)
-    if is_test:
+    if is_test or True:
+        __show_line_rotated_image(rotated_image, rotated_squares)
         print(f"{Fore.CYAN}Elapsed time: {time.time() - start}{Fore.RESET}")
         __show_test_images(image, edges, clustered, chessboard)
 
@@ -46,16 +46,17 @@ def __show_test_images(
     squares: list[list[Square]],
     chessboard: Chessboard
 ) -> None:
-    utils.show_image(edges)
-    print(f"Found squares: {squares}")
+    # utils.show_image(edges)
+    # print(f"Found squares: {squares}")
     
-    line_img = image.copy()
-    colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
-    for i in range(len(squares)):
-        __draw_squares(line_img, squares[i], colors[i%len(colors)])
+    # line_img = image.copy()
+    # colors = [(0, 255, 0), (0, 0, 255), (255, 0, 0)]
+    # for i in range(len(squares)):
+    #     __draw_squares(line_img, squares[i], colors[i%len(colors)])
     # utils.show_image(line_img)
     
     if chessboard is not None:
+        utils.show_image(chessboard.wrapped)
         wrapped = chessboard.wrapped.copy()
         h, w , _= wrapped.shape
         for i in range(0, 7):
